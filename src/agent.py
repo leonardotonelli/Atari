@@ -11,12 +11,14 @@ class PacmanAgent:
         final_epsilon: float,
         discount_factor: float = 0.95,
         replay_capacity: int = 1000,
-        DQN = "dqn"
+        DQN = "dqn" #TODO
         ):
 
         self.env = env
         self.Q = DQN #initialize the DQN
         self.Q_at = DQN
+        self.Q_values = np.zeros(env.action_space.n)
+        self.Q_at_values = np.zeros(env.action_space.n)
 
         self.lr = learning_rate
         self.discount_factor = discount_factor
@@ -29,7 +31,11 @@ class PacmanAgent:
 
         self.training_error = []
 
-    def get_action(self, current_state: tuple[int, int, bool]) -> int:
+
+    def compute_q_values(self, state: np.array):
+        self.Q_values = self.Q.eval(state)
+
+    def get_action(self) -> int:
         """
         Returns the best action with probability (1 - epsilon)
         otherwise a random action with probability epsilon to ensure exploration.
@@ -39,7 +45,7 @@ class PacmanAgent:
             return self.env.action_space.sample()
         # with probability (1 - epsilon) act greedily (exploit)
         else:
-            return int(self.DQN.optimal_action(current_state)) #TODO
+            return int(np.argmax(self.Q_values))
     
     def store_memory(self, current_state, action, reward, next_state):
         if len(self.memory)+1 == self.memory_capacity:
@@ -53,17 +59,17 @@ class PacmanAgent:
 
     def update_Q(
             self,
-            current_state: tuple[int, int, bool],
+            current_state: np.array,
             action: int,
             reward: float,
             terminated: bool,
-            next_obs: tuple[int, int, bool],
+            next_state: np.array,
     ):
         """Updates the parameters of the DQN, given a random-batch (current_state, action, reward, next_state)"""
-        y = reward + (not terminated) * self.discount_factor * self.Q_at.max(next_obs) #TODO
-        error = ( y - self.Q.evaluate(current_state, action) )^2 #TODO
+        y = reward + (not terminated) * self.discount_factor * np.max(self.Q_at.eval(next_state)) 
+        error = ( y - self.Q_values[action] )^2 
         self.training_error.append(error)
-        self.Q.step(error) #TODO
+        self.Q.step(y, action) #TODO
 
     def update_Q_at(self):
         """Updates the parameters of the DQN, given a random-batch (current_state, action, reward, next_state)"""
@@ -74,7 +80,5 @@ class PacmanAgent:
 
 
 ## methods for DQN:
-##  .max(next_obs) : get the maxiumum value over the possible actions given the next state
-##  .evaluate(current_state, action) : get the value of a specific action given a state
-##  .step(error) : make a gradient step given the error measure
-##  .optimal_action(current_state) : get the best action given the current state
+##  .eval() : forward pass for a given input state
+##  .step(y, action) : make a gradient step given the target y and the action from which we are evaluating our current estimate
