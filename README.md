@@ -1,1 +1,2 @@
 # Atari
+Ongoing project. Replication of the DQN architecture and training from scratch (using PyTorch, Gymnasium and Numpy) of the breakthough paper Mnih, Volodymyr, Kavukcuoglu, Koray, Silver, David, Graves, Alex, Antonoglou, Ioannis, Wierstra, Daan, & Riedmiller, Martin. "Playing Atari with Deep Reinforcement Learning." DeepMind Technologies. Available: arXiv:1312.5602 [cs.LG], December 2013.
