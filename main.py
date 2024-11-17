@@ -12,7 +12,7 @@ learning_rate = 0.01
 start_epsilon = 1.0
 n_episodes = 100
 epsilon_decay = start_epsilon / (n_episodes / 2)  # reduce the exploration over time
-final_epsilon = 0.2
+final_epsilon = 0.3
 
 env = gym.make("ALE/MsPacman-v5", frameskip=1)
 env = AtariPreprocessing(
