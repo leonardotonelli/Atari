@@ -80,5 +80,5 @@ class PacmanAgent:
 
 
 ## methods for DQN:
-##  .eval() : forward pass for a given input state
+##  .forward() : forward pass for a given input state
 ##  .step(y, action) : make a gradient step given the target y and the action from which we are evaluating our current estimate
