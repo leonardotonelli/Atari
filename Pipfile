@@ -8,8 +8,9 @@ pandas = "*"
 numpy = "*"
 matplotlib = "*"
 ale-py = "*"
-gymnasium = {extras = ["other"], version = "*"}
 tqdm = "*"
+torch = "*"
+gymnasium = {extras = ["atari"], version = "*"}
 
 [dev-packages]
 

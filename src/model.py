@@ -66,6 +66,11 @@ class NeuralNetwork(nn.Module):
         optimizer.step()
 
         return loss.item()
+    
+    def get_value(self, state, action):
+        q_values = self.forward(state)
+        value = q_values[action]
+        return value
 
 # Example of usage:
 # Assuming input image dimensions are (3, 84, 84) and 4 valid actions

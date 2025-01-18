@@ -4,6 +4,7 @@ from tqdm import tqdm
 from agent import PacmanAgent
 import gymnasium as gym
 from model import NeuralNetwork
+import ale_py
 
 def training(env, agent, n_episodes: int, batch_size: int):
     """
@@ -57,7 +58,7 @@ def training(env, agent, n_episodes: int, batch_size: int):
     plt.title("Training Progress")
     plt.show()
 
-env = gym.make("MsPacman-v0")
+env = gym.make("ALE/MsPacman-v5")
 num_actions = env.action_space.n
 state_shape = env.observation_space.shape
 
