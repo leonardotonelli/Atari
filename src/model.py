@@ -42,15 +42,15 @@ class NeuralNetwork(nn.Module):
         x = self.out(x)
         return x
 
-    def step(self, batch_df: pd.DataFrame):
+    def step(self, targets, outputs):
         """
-        Perform a gradient step given a mini_batch, which is in pandas DataFrame object
-        and has the following variables: "targets" and "q_value". This function will update the
-        DQN object permorming a gradient step in the direction of the targets.
+        Perform a gradient step given a mini_batch. This function will update the
+        DQN object permorming a gradient step in the direction of the targets. 
+        Inputs are two tensors defining targets and the outputs of the DQN.
         """
 
         loss_fn = nn.MSELoss()
-        loss = loss_fn(torch.tensor(batch_df["q_value"].values), torch.tensor(batch_df["targets"].values))
+        loss = loss_fn(torch.tensor(outputs, targets))
         self.training_error.append(loss.item())
 
         # Backpropagation

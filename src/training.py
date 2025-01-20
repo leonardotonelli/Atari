@@ -5,6 +5,7 @@ from agent import PacmanAgent
 from model import NeuralNetwork
 import ale_py
 import gymnasium as gym
+from gymnasium.wrappers import AtariPreprocessing
 gym.register_envs(ale_py)
 
 def training(env, agent, n_episodes: int, batch_size: int):
@@ -59,7 +60,12 @@ def training(env, agent, n_episodes: int, batch_size: int):
     plt.title("Training Progress")
     plt.show()
 
-env = gym.make("ALE/MsPacman-v5")
+env = gym.make("ALE/MsPacman-v5", frameskip=1)
+env = AtariPreprocessing(
+    env,
+    noop_max=10, frame_skip=4, terminal_on_life_loss=True,
+    screen_size=84, grayscale_obs=False, grayscale_newaxis=False
+)   
 num_actions = env.action_space.n
 state_shape = env.observation_space.shape
 

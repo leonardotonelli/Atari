@@ -71,11 +71,11 @@ class PacmanAgent:
         batch = self.sample_memory(batch_size)
 
         # create the batch dataset
-        current_states = np.array([sample[0] for sample in batch])
-        actions = np.array([sample[1] for sample in batch])
-        rewards = np.array([sample[2] for sample in batch])
-        next_states = np.array([sample[3] for sample in batch])
-        terminated = np.array([sample[4] for sample in batch])
+        current_states = torch.tensor([torch.tensor(sample[0]) for sample in batch])
+        actions = torch.tensor([sample[1] for sample in batch])
+        rewards = torch.tensor([sample[2] for sample in batch])
+        next_states = torch.tensor([torch.tensor(sample[3]) for sample in batch])
+        terminated = torch.tensor([sample[4] for sample in batch])
 
         batch_df = pd.DataFrame({
             "current_state": current_states,
@@ -84,14 +84,14 @@ class PacmanAgent:
             "next_state": next_states,
             "terminated": terminated
         })
-
-        batch_df["temp"] = [self.Q_at.forward(torch.from_numpy(next_state)) for next_state in batch_df["next_state"]]
-        batch_df["temp"] = batch_df["temp"].apply(lambda x: max(x))
-        batch_df["targets"] = batch_df["reward"] + batch_df["terminated"] * batch_df["temp"]
-        batch_df["q_value"] = [self.Q.get_value(current_state, current_action) for current_state, current_action in zip(batch_df.current_state, batch_df.current_action)]
-
+        temp = torch.tensor([self.Q_at.forward(next_state) for next_state in next_states]).max(dim=1)
+        targets = rewards + terminated * temp
+        outputs = torch.tensor([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(batch_df.current_state, batch_df.current_action)])
+        
         # make the gradient step and record training error
-        loss = self.Q.step(batch_df)
+        loss = self.Q.step(targets, outputs)
+
+        # store the loss in the class field
         self.training_error.append(loss)
 
     def update_Q_at(self):
