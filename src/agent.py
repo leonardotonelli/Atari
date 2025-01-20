@@ -1,7 +1,5 @@
 import gymnasium as gym
 import numpy as np
-
-import numpy as np
 import random
 import gymnasium as gym
 import torch
@@ -87,46 +85,14 @@ class PacmanAgent:
             "terminated": terminated
         })
 
-        batch_df["temp"] = [self.Q_at.forward(next_state) for next_state in batch_df["next_state"]]
+        batch_df["temp"] = [self.Q_at.forward(torch.from_numpy(next_state)) for next_state in batch_df["next_state"]]
         batch_df["temp"] = batch_df["temp"].apply(lambda x: max(x))
         batch_df["targets"] = batch_df["reward"] + batch_df["terminated"] * batch_df["temp"]
-        batch_df["q_values"] = [self.get_value(current_state, current_action) for current_state, current_action in zip(batch_df.current_state, batch_df.current_action)]
+        batch_df["q_value"] = [self.Q.get_value(current_state, current_action) for current_state, current_action in zip(batch_df.current_state, batch_df.current_action)]
 
-
-        # compute the step
-        # Compute loss
-        loss = self.loss_fn(batch_df["q_values"], batch_df["targets"])
-        self.training_error.append(loss.item())
-
-        # Backpropagation
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-
-        # current_states = torch.tensor([sample[0] for sample in batch], dtype=torch.float32)
-        # actions = torch.tensor([sample[1] for sample in batch], dtype=torch.int64)
-        # rewards = torch.tensor([sample[2] for sample in batch], dtype=torch.float32)
-        # next_states = torch.tensor([sample[3] for sample in batch], dtype=torch.float32)
-        # terminated = torch.tensor([sample[4] for sample in batch], dtype=torch.bool)
-
-        # # Compute Q-values for current states
-        # q_values = self.Q.forward(current_states)
-        # q_values = q_values.gather(1, actions.unsqueeze(1)).squeeze(1)  
-
-        # # Compute target Q-values
-        # with torch.no_grad():
-        #     next_q_values = self.Q_at(next_states).max(1)[0]
-        #     targets = rewards + (1 - terminated.float()) * self.discount_factor * next_q_values
-
-        # # Compute loss
-        # loss = self.loss_fn(q_values, targets)
-        # self.training_error.append(loss.item())
-
-        # # Backpropagation
-        # self.optimizer.zero_grad()
-        # loss.backward()
-        # self.optimizer.step()
+        # make the gradient step and record training error
+        loss = self.Q.step(batch_df)
+        self.training_error.append(loss)
 
     def update_Q_at(self):
         """Update the target network to match the main network."""

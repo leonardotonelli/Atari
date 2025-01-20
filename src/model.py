@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pandas as pd
 
 class NeuralNetwork(nn.Module):
     def __init__(self, num_actions):
@@ -41,29 +42,21 @@ class NeuralNetwork(nn.Module):
         x = self.out(x)
         return x
 
-    def step(self, y, action):
+    def step(self, batch_df: pd.DataFrame):
         """
-        Perform a gradient step given the target y and the action from which
-        we are evaluating our current estimate.
-        
-        Args:
-            y (torch.Tensor): Target values.
-            action (torch.Tensor): Actions for which Q-values were computed.
+        Perform a gradient step given a mini_batch, which is in pandas DataFrame object
+        and has the following variables: "targets" and "q_value". This function will update the
+        DQN object permorming a gradient step in the direction of the targets.
         """
-        # Compute the loss
+
         loss_fn = nn.MSELoss()
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-4)
+        loss = loss_fn(torch.tensor(batch_df["q_value"].values), torch.tensor(batch_df["targets"].values))
+        self.training_error.append(loss.item())
 
-        # Forward pass
-        current_q_values = self.forward(action)
-
-        # Calculate the loss
-        loss = loss_fn(current_q_values, y)
-
-        # Backpropagation and optimization
-        optimizer.zero_grad()
+        # Backpropagation
+        self.optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
+        self.optimizer.step()
 
         return loss.item()
     

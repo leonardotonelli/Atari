@@ -2,9 +2,10 @@ from matplotlib import pyplot as plt
 import numpy as np
 from tqdm import tqdm
 from agent import PacmanAgent
-import gymnasium as gym
 from model import NeuralNetwork
 import ale_py
+import gymnasium as gym
+gym.register_envs(ale_py)
 
 def training(env, agent, n_episodes: int, batch_size: int):
     """

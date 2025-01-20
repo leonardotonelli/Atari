@@ -7,10 +7,10 @@ name = "pypi"
 pandas = "*"
 numpy = "*"
 matplotlib = "*"
-ale-py = "*"
 tqdm = "*"
 torch = "*"
-gymnasium = {extras = ["atari"], version = "*"}
+gymnasium = "*"
+ale-py = "*"
 
 [dev-packages]
 
