@@ -61,9 +61,11 @@ class NeuralNetwork(nn.Module):
         return loss.item()
     
     def get_value(self, state, action):
-        q_values = self.forward(state)
-        value = q_values[action]
-        return value
+        q_values = self(state)
+        value = q_values[0, action]
+        return float(value)
+
+
 
 # Example of usage:
 # Assuming input image dimensions are (3, 84, 84) and 4 valid actions
