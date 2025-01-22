@@ -36,15 +36,18 @@ class PacmanAgent:
 
         self.training_error = []
 
-    def compute_q_values(self, state: np.array):
-        """Compute Q-values for a given state."""
-        self.Q_values = self.Q.forward(state)
+    # def compute_q_values(self, state):
+    #     """Compute Q-values for a given state."""
+    #     self.Q_values = self.Q(state)
 
-    def get_action(self) -> int:
+    def get_action(self, state) -> int:
         """
         Returns the best action with probability (1 - epsilon)
         otherwise a random action with probability epsilon to ensure exploration.
         """
+        input_tensor = torch.tensor(state, dtype=torch.float32)
+        state = input_tensor.unsqueeze(0).permute(0, 3, 1, 2)
+        self.Q_values = self.Q(state)
         if np.random.random() < self.epsilon:
             return self.env.action_space.sample()
         else:
@@ -69,27 +72,27 @@ class PacmanAgent:
         if len(self.memory) < batch_size:
             return  # Not enough samples to update
         batch = self.sample_memory(batch_size)
-
+        print(f"This is sample types: {type(batch[0][0])}")
         # create the batch dataset
-        current_states = torch.tensor([torch.tensor(sample[0]) for sample in batch])
-        actions = torch.tensor([sample[1] for sample in batch])
-        rewards = torch.tensor([sample[2] for sample in batch])
-        next_states = torch.tensor([torch.tensor(sample[3]) for sample in batch])
-        terminated = torch.tensor([sample[4] for sample in batch])
+        current_states = torch.tensor(np.array([sample[0] for sample in batch]), dtype=torch.float32)
+        current_states = current_states.permute(0, 3, 1, 2)  # Reorder dimensions
+        actions = torch.tensor(np.array([sample[1] for sample in batch]), dtype=torch.int64)  # Assuming actions are integers
+        rewards = torch.tensor(np.array([sample[2] for sample in batch]), dtype=torch.float32)
+        next_states = torch.tensor(np.array([sample[3] for sample in batch]), dtype=torch.float32)
+        next_states = next_states.permute(0, 3, 1, 2)  # From [batch, height, width, channels] to [batch, channels, height, width]
 
-        batch_df = pd.DataFrame({
-            "current_state": current_states,
-            "current_action": actions,
-            "reward": rewards,
-            "next_state": next_states,
-            "terminated": terminated
-        })
-        temp = torch.tensor([self.Q_at.forward(next_state) for next_state in next_states]).max(dim=1)
+        terminated = torch.tensor(np.array([sample[4] for sample in batch]), dtype=torch.float32)
+
+        temp = torch.stack([
+            self.Q_at.forward(next_state).detach() for next_state in next_states
+        ]).max(dim=1).values
+
         targets = rewards + terminated * temp
-        outputs = torch.tensor([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(batch_df.current_state, batch_df.current_action)])
+        outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
         
         # make the gradient step and record training error
-        loss = self.Q.step(targets, outputs)
+        loss = self.Q.step(targets.to(torch.float64), outputs.to(torch.float64))  # For Double precision
+
 
         # store the loss in the class field
         self.training_error.append(loss)

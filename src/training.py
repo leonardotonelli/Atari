@@ -26,9 +26,9 @@ def training(env, agent, n_episodes: int, batch_size: int):
         total_reward = 0  # Track total reward for the episode
 
         while not done:
-            # Compute Q-values and decide action
-            agent.compute_q_values(obs)
-            action = agent.get_action()
+            # # Compute Q-values and decide action
+            # agent.compute_q_values(obs)
+            action = agent.get_action(obs)
 
             # Take action in the environment
             next_obs, reward, terminated, truncated, info = env.step(action)
@@ -84,7 +84,7 @@ agent = PacmanAgent(
 )
 
 # Train the agent
-training(env, agent, n_episodes=500, batch_size=32)
+training(env, agent, n_episodes=1, batch_size=1)
 
 
 def visualize_errors(env, agent):

@@ -7,38 +7,30 @@ class NeuralNetwork(nn.Module):
     def __init__(self, num_actions):
         super(NeuralNetwork, self).__init__()
 
-        # First convolutional layer: 32 filters of 8x8, stride 4
+        # Convolutional layers
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=8, stride=4)
-        
-        # Second convolutional layer: 64 filters of 4x4, stride 2
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
-        
-        # Third convolutional layer: 64 filters of 3x3, stride 1
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
 
-        # Fully connected hidden layer with 512 rectifier units
+        # Fully connected layers
         self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
-
-        # Output layer: one output per action
         self.out = nn.Linear(in_features=512, out_features=num_actions)
 
+        self.training_error = []
+        
+
     def forward(self, x):
-        # Pass input through the first convolutional layer
+        print("Input shape:", x.shape)
         x = F.relu(self.conv1(x))
-
-        # Pass through the second convolutional layer
+        print("After conv1:", x.shape)
         x = F.relu(self.conv2(x))
-
-        # Pass through the third convolutional layer
+        print("After conv2:", x.shape)
         x = F.relu(self.conv3(x))
-
-        # Flatten the output from the convolutional layers
-        x = x.view(x.size(0), -1)
-
-        # Pass through the fully connected hidden layer
+        print("After conv3:", x.shape)
+        x =  torch.flatten(x)  # Flatten
+        print("After flatten:", x.shape)
         x = F.relu(self.fc1(x))
-
-        # Pass through the output layer
+        print("After fc1:", x.shape)
         x = self.out(x)
         return x
 
@@ -48,9 +40,9 @@ class NeuralNetwork(nn.Module):
         DQN object permorming a gradient step in the direction of the targets. 
         Inputs are two tensors defining targets and the outputs of the DQN.
         """
-
+        self.optimizer = torch.optim.RMSprop(self.parameters(), lr=0.001, alpha=0.99, eps=1e-08, weight_decay=0)
         loss_fn = nn.MSELoss()
-        loss = loss_fn(torch.tensor(outputs, targets))
+        loss = loss_fn(outputs, targets)
         self.training_error.append(loss.item())
 
         # Backpropagation
@@ -60,9 +52,9 @@ class NeuralNetwork(nn.Module):
 
         return loss.item()
     
-    def get_value(self, state, action):
+    def get_value(self, state, action=None):
         q_values = self(state)
-        value = q_values[0, action]
+        value = q_values[action]
         return float(value)
 
 
