@@ -36,9 +36,6 @@ class PacmanAgent:
 
         self.training_error = []
 
-    # def compute_q_values(self, state):
-    #     """Compute Q-values for a given state."""
-    #     self.Q_values = self.Q(state)
 
     def get_action(self, state) -> int:
         """
@@ -51,7 +48,7 @@ class PacmanAgent:
         if np.random.random() < self.epsilon:
             return self.env.action_space.sample()
         else:
-            return int(np.argmax(self.Q_values))
+            return int(torch.argmax(self.Q_values))
 
     def store_memory(self, current_state, action, reward, next_state, terminated):
         """Store experiences in replay memory."""
@@ -104,9 +101,3 @@ class PacmanAgent:
     def decay_epsilon(self):
         """Decay the exploration rate."""
         self.epsilon = max(self.final_epsilon, self.epsilon * self.epsilon_decay)
-
-
-
-## methods for DQN:
-##  .forward() : forward pass for a given input state
-##  .step(y, action) : make a gradient step given the target y and the action from which we are evaluating our current estimate

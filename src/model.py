@@ -20,17 +20,17 @@ class NeuralNetwork(nn.Module):
         
 
     def forward(self, x):
-        print("Input shape:", x.shape)
+        # print("Input shape:", x.shape)
         x = F.relu(self.conv1(x))
-        print("After conv1:", x.shape)
+        # print("After conv1:", x.shape)
         x = F.relu(self.conv2(x))
-        print("After conv2:", x.shape)
+        # print("After conv2:", x.shape)
         x = F.relu(self.conv3(x))
-        print("After conv3:", x.shape)
+        # print("After conv3:", x.shape)
         x =  torch.flatten(x)  # Flatten
-        print("After flatten:", x.shape)
+        # print("After flatten:", x.shape)
         x = F.relu(self.fc1(x))
-        print("After fc1:", x.shape)
+        # print("After fc1:", x.shape)
         x = self.out(x)
         return x
 
@@ -56,17 +56,3 @@ class NeuralNetwork(nn.Module):
         q_values = self(state)
         value = q_values[action]
         return float(value)
-
-
-
-# Example of usage:
-# Assuming input image dimensions are (3, 84, 84) and 4 valid actions
-num_actions = 4
-model = NeuralNetwork(num_actions)
-
-# Example input tensor of batch size 1
-example_input = torch.rand(1, 3, 84, 84)  # Batch size 1, RGB channels
-
-# Forward pass
-output = model(example_input)
-print(output)
