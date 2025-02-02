@@ -8,7 +8,7 @@ import gymnasium as gym
 from gymnasium.wrappers import AtariPreprocessing
 gym.register_envs(ale_py)
 
-def training(env, agent, n_episodes: int, batch_size: int):
+def training(env, agent, n_episodes: int, batch_size: int, C: int):
     """
     Train the agent in the environment for a specified number of episodes.
 
@@ -19,13 +19,20 @@ def training(env, agent, n_episodes: int, batch_size: int):
         batch_size: Size of the minibatch for training.
     """
     episode_rewards = []  # To track rewards per episode
-
+    s = 0 
     for episode in tqdm(range(n_episodes)):
+        s+=1
+        print(s)
         obs, info = env.reset()  # Reset the environment
         done = False
         total_reward = 0  # Track total reward for the episode
+        rep = 0
 
         while not done:
+            rep += 1
+            if rep == C:
+                # Update the target Q-network
+                agent.update_Q_at()
 
             # select next action
             action = agent.get_action(obs)
@@ -43,9 +50,6 @@ def training(env, agent, n_episodes: int, batch_size: int):
             # Update `done` and the current state
             done = terminated or truncated
             obs = next_obs
-
-        # Update the target Q-network
-        agent.update_Q_at()
 
         # Decay exploration rate
         agent.decay_epsilon()

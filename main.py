@@ -3,22 +3,22 @@ import gymnasium as gym
 import ale_py
 from gymnasium.wrappers import AtariPreprocessing
 from tqdm import tqdm
-from src.agent import PacmanAgent
+from src.agent import Agent
 from src.training import training
 from model import NeuralNetwork
 
 gym.register_envs(ale_py)
 
 # hyperparameters
-game_index = "ALE/MsPacman-v5"
+game_index = "ALE/DemonAttack-v5"
 
-n_episodes = 100
+n_episodes = 10
 batch_size = 10
 
 learning_rate = 0.01
-initial_epsilon = 1.0
+initial_epsilon = 1
 epsilon_decay = initial_epsilon / (n_episodes / 2)  
-final_epsilon = 0.3
+final_epsilon = 0.1
 
 replay_capacity = 10000
 
@@ -38,7 +38,7 @@ state_shape = env.observation_space.shape
 DQN = NeuralNetwork(num_actions)
 
 # Initialize PacmanAgent
-agent = PacmanAgent(
+agent = Agent(
     env=env,
     DQN=DQN,
     learning_rate=learning_rate,

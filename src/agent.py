@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 import pandas as pd
 
-class PacmanAgent:
+class Agent:
     def __init__(
         self,
         env: gym.Env,
@@ -68,7 +68,7 @@ class PacmanAgent:
         if len(self.memory) < batch_size:
             return  # Not enough samples to update
         batch = self.sample_memory(batch_size)
-        print(f"This is sample types: {type(batch[0][0])}")
+        # print(f"This is sample types: {type(batch[0][0])}")
         # create the batch dataset
         current_states = torch.tensor(np.array([sample[0] for sample in batch]), dtype=torch.float32)
         current_states = current_states.permute(0, 3, 1, 2)  # Reorder dimensions
