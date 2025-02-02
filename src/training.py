@@ -26,8 +26,8 @@ def training(env, agent, n_episodes: int, batch_size: int):
         total_reward = 0  # Track total reward for the episode
 
         while not done:
-            # # Compute Q-values and decide action
-            # agent.compute_q_values(obs)
+
+            # select next action
             action = agent.get_action(obs)
 
             # Take action in the environment

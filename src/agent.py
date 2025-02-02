@@ -20,8 +20,8 @@ class PacmanAgent:
         replay_capacity: int = 1000
     ):
         self.env = env
-        self.Q = DQN  # Initialize the main DQN
-        self.Q_at = DQN  # Initialize the target DQN
+        self.Q = DQN  
+        self.Q_at = DQN  
 
         self.optimizer = optim.Adam(self.Q.parameters(), lr=learning_rate)
         self.loss_fn = nn.MSELoss()
@@ -64,7 +64,6 @@ class PacmanAgent:
         """
         Updates the parameters of the DQN using a random batch from memory.
         """
-
         #sample minibatch from the memory
         if len(self.memory) < batch_size:
             return  # Not enough samples to update
@@ -73,7 +72,7 @@ class PacmanAgent:
         # create the batch dataset
         current_states = torch.tensor(np.array([sample[0] for sample in batch]), dtype=torch.float32)
         current_states = current_states.permute(0, 3, 1, 2)  # Reorder dimensions
-        actions = torch.tensor(np.array([sample[1] for sample in batch]), dtype=torch.int64)  # Assuming actions are integers
+        actions = torch.tensor(np.array([sample[1] for sample in batch]), dtype=torch.int64)  
         rewards = torch.tensor(np.array([sample[2] for sample in batch]), dtype=torch.float32)
         next_states = torch.tensor(np.array([sample[3] for sample in batch]), dtype=torch.float32)
         next_states = next_states.permute(0, 3, 1, 2)  # From [batch, height, width, channels] to [batch, channels, height, width]
@@ -88,8 +87,7 @@ class PacmanAgent:
         outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
         
         # make the gradient step and record training error
-        loss = self.Q.step(targets.to(torch.float64), outputs.to(torch.float64))  # For Double precision
-
+        loss = self.Q.step(targets.to(torch.float64), outputs.to(torch.float64))  
 
         # store the loss in the class field
         self.training_error.append(loss)

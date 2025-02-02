@@ -16,9 +16,6 @@ class NeuralNetwork(nn.Module):
         self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
         self.out = nn.Linear(in_features=512, out_features=num_actions)
 
-        self.training_error = []
-        
-
     def forward(self, x):
         # print("Input shape:", x.shape)
         x = F.relu(self.conv1(x))
@@ -43,7 +40,6 @@ class NeuralNetwork(nn.Module):
         self.optimizer = torch.optim.RMSprop(self.parameters(), lr=0.001, alpha=0.99, eps=1e-08, weight_decay=0)
         loss_fn = nn.MSELoss()
         loss = loss_fn(outputs, targets)
-        self.training_error.append(loss.item())
 
         # Backpropagation
         self.optimizer.zero_grad()
