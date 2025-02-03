@@ -16,6 +16,11 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     episode_rewards = []  # To track rewards per episode
     rep = 0 # counter to track the delayed update of Q
 
+    ##TODO VETTORE PER AVERAGE Q VALUES PER POI VISUALIZZARLI
+
+    ##TODO TROVA UN MODO PER SALVARE 3/4 FRAMES CON ALTO Q-VALUE E 3/4 FRAMES CON BASSO Q-VALUE
+
+
     for episode in tqdm(range(n_episodes)):
         obs, info = env.reset()  # Reset the environment
         done = False
@@ -66,6 +71,8 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     plt.ylabel("Total Reward")
     plt.title("Training Progress")
     plt.show()
+
+    ##TODO VISUALIZZARE AVERAGE Q-VALUES PER EPISODE
 
 
 def evaluate(env, agent, n_games = 10):

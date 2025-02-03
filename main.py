@@ -12,19 +12,19 @@ gym.register_envs(ale_py)
 # hyperparameters
 game_index = "ALE/DemonAttack-v5"
 
-n_episodes = 2
-batch_size = 1
+n_episodes = 100
+batch_size = 32
 
 learning_rate = 0.01
 initial_epsilon = 1
 epsilon_decay = initial_epsilon / (n_episodes / 2)  
-final_epsilon = 0.1
+final_epsilon = .00025
 
 replay_capacity = 10000
 
 
 # initialize environment
-env = gym.make(game_index, frameskip=1, render_mode="human")
+env = gym.make(game_index, frameskip=1)
 env = AtariPreprocessing(
     env,
     noop_max=10, frame_skip=4, terminal_on_life_loss=True,
@@ -52,6 +52,14 @@ agent = Agent(
 training(env, agent, n_episodes=n_episodes, batch_size=batch_size, C=10000, verbose=(False, 2))
 
 
+#TODO TROVARE UN MODO PER SALVARE AGENT.Q NELLA REPOSITORY E USARLA NEL FILE EVAL.PY
 
 # evaluation
-evaluate(env, agent, n_games = 2)
+# env = gym.make(game_index, frameskip=1, render_mode="human")
+# env = AtariPreprocessing(
+#     env,
+#     noop_max=10, frame_skip=4, terminal_on_life_loss=True,
+#     screen_size=84, grayscale_obs=False, grayscale_newaxis=False
+# )   
+
+# evaluate(env, agent, n_games = 10)
