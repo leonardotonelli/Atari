@@ -3,8 +3,8 @@ import gymnasium as gym
 import ale_py
 from gymnasium.wrappers import AtariPreprocessing
 from tqdm import tqdm
-from src.agent import Agent
-from src.training import training
+from agent import Agent
+from training import training, evaluate
 from model import NeuralNetwork
 
 gym.register_envs(ale_py)
@@ -12,8 +12,8 @@ gym.register_envs(ale_py)
 # hyperparameters
 game_index = "ALE/DemonAttack-v5"
 
-n_episodes = 10
-batch_size = 10
+n_episodes = 2
+batch_size = 1
 
 learning_rate = 0.01
 initial_epsilon = 1
@@ -24,7 +24,7 @@ replay_capacity = 10000
 
 
 # initialize environment
-env = gym.make(game_index, frameskip=1)
+env = gym.make(game_index, frameskip=1, render_mode="human")
 env = AtariPreprocessing(
     env,
     noop_max=10, frame_skip=4, terminal_on_life_loss=True,
@@ -49,7 +49,9 @@ agent = Agent(
 )
 
 # train the agent
-training(env, agent, n_episodes=n_episodes, batch_size=batch_size)
+training(env, agent, n_episodes=n_episodes, batch_size=batch_size, C=10000, verbose=(False, 2))
 
 
 
+# evaluation
+evaluate(env, agent, n_games = 2)

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import pandas as pd
+import numpy as np
 
 class NeuralNetwork(nn.Module):
     def __init__(self, num_actions):
@@ -38,12 +39,13 @@ class NeuralNetwork(nn.Module):
         Inputs are two tensors defining targets and the outputs of the DQN.
         """
         self.optimizer = torch.optim.RMSprop(self.parameters(), lr=0.001, alpha=0.99, eps=1e-08, weight_decay=0)
-        loss_fn = nn.MSELoss()
+        loss_fn = torch.nn.HuberLoss(reduction='mean', delta=1.0) # error/gradient clipping
         loss = loss_fn(outputs, targets)
 
         # Backpropagation
         self.optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
         self.optimizer.step()
 
         return loss.item()
