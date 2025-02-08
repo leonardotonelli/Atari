@@ -8,46 +8,7 @@ import os
 import heapq
 from PIL import Image
 import cv2
-
-# Save frames
-highest_q_frames = []  # Max heap for highest Q-values
-lowest_q_frames = []   # Min heap for lowest Q-values
-
-def save_frame(frame, q_value, frame_type, episode, step):
-    os.makedirs("saved_frames", exist_ok=True)
-    file_name = f"saved_frames/{frame_type}_q{q_value:.2f}_ep{episode}_step{step}.png"
-    cv2.imwrite(file_name, cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
-    
-    # Convert frame (NumPy array) to an image and save
-    image = Image.fromarray(frame)
-    image.save(file_name)
-
-
-def update_q_frame_records(frame, q_value, episode, step):
-    
-    frame = tuple(map(tuple, frame))
-
-    # Maintain max-heap for highest Q-values (store negative Q-values for heapq to work correctly)
-    if len(highest_q_frames) < 4:
-        heapq.heappush(highest_q_frames, (-q_value, frame, episode, step))
-    else:
-        heapq.heappushpop(highest_q_frames, (-q_value, frame, episode, step))
-
-    # Maintain min-heap for lowest Q-values
-    if len(lowest_q_frames) < 4:
-        heapq.heappush(lowest_q_frames, (q_value, frame, episode, step))
-    else:
-        heapq.heappushpop(lowest_q_frames, (q_value, frame, episode, step))
-
-
-def save_final_q_frames():
-    # Save highest Q-value frames
-    for neg_q_value, frame, episode, step in highest_q_frames:
-        save_frame(frame, -neg_q_value, "highest", episode, step)
-
-    # Save lowest Q-value frames
-    for q_value, frame, episode, step in lowest_q_frames:
-        save_frame(frame, q_value, "lowest", episode, step)
+import torch
 
 
 def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (False, 0)):
@@ -76,7 +37,7 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
 
         while not done:
             rep += 1
-            if rep == C:
+            if rep % C == 0:
                 # Update the target Q-network
                 agent.update_Q_at()
 
@@ -100,16 +61,19 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
             # Update the agent's Q-network using replay memory
             agent.update_Q(batch_size)
             
-            if len(agent.rewards) > 200  and sum(agent.rewards) == 0:
+            # to avoid getting stuck in a 0 sequence loop
+            if len(agent.rewards) > 400 and sum(agent.rewards) == 0:
                 terminated = True
-            # Update `done` and the current state
-            done = terminated or truncated
-            obs = next_obs
-            
+
             # Save average Q-value for the episode
             action_Q_value = agent.Q_values.detach().cpu().numpy()
             stateavg_Q_values.append(action_Q_value.mean()) # Log the episode's average Q-value
         
+            # Update `done` and the current state
+            done = terminated or truncated
+            obs = next_obs
+            
+
         # Decay exploration rate
         agent.decay_epsilon()
 
@@ -141,11 +105,9 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     
     
 def save_obs(obs, path= "frames/highest.png"):
-
     # Convert to a PIL Image and save
     image = Image.fromarray(obs)
     image.save(path)  # Save as PNG
-
 
 
 def evaluate(env, agent, n_games = 10):

@@ -15,8 +15,8 @@ gym.register_envs(ale_py)
 # hyperparameters
 game_index = "ALE/DemonAttack-v5"
 
-n_episodes = 1
-batch_size = 1
+n_episodes = 100
+batch_size = 32
 
 learning_rate = 0.01
 initial_epsilon = 1

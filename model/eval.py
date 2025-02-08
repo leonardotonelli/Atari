@@ -37,7 +37,7 @@ agent = Agent(
 
 # Caricamento dei pesi del modello
 agent.Q.load_state_dict(torch.load("model/agent_Q.pth"))
-agent.Q.eval()  # Imposta la rete in modalità di valutazione
+# agent.Q.eval()  # Imposta la rete in modalità di valutazione
 
 # Evaluation
 evaluate(env, agent, n_games=1)

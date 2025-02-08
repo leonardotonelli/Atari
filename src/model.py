@@ -28,7 +28,7 @@ class NeuralNetwork(nn.Module):
         # print("After conv2:", x.shape)
         x = F.relu(self.conv3(x))
         # print("After conv3:", x.shape)
-        x =  torch.flatten(x)  # Flatten
+        x = torch.flatten(x, start_dim=1)  # Flatten
         # print("After flatten:", x.shape)
         x = F.relu(self.fc1(x))
         # print("After fc1:", x.shape)

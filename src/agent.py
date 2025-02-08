@@ -5,6 +5,7 @@ import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import copy
 
 class Agent:
     def __init__(
@@ -16,11 +17,11 @@ class Agent:
         epsilon_decay: float,
         final_epsilon: float,
         discount_factor: float = 0.95,
-        replay_capacity: int = 1000
+        replay_capacity: int = 500000
     ):
         self.env = env
         self.Q = DQN  
-        self.Q_at = DQN  
+        self.Q_at = copy.deepcopy(DQN)  
 
         self.optimizer = optim.Adam(self.Q.parameters(), lr=learning_rate)
         self.loss_fn = nn.MSELoss()
@@ -87,12 +88,14 @@ class Agent:
 
         terminated = torch.tensor(np.array([sample[4] for sample in batch]), dtype=torch.float32)
 
-        temp = torch.stack([
-            self.Q_at.forward(next_state).detach() for next_state in next_states
-        ]).max(dim=1).values
+        temp = self.Q_at(next_states).max(dim=1).values
 
-        targets = rewards + terminated * temp
-        outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
+        current_q_values = self.Q(current_states)  # Shape: [batch_size, num_actions]
+        actions = actions.unsqueeze(1)  # Shape: [batch_size, 1]
+        outputs = current_q_values.gather(1, actions).squeeze(1)  # Shape: [batch_size]
+
+        targets = rewards + self.discount_factor * terminated * temp
+        # outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
         
         # make the gradient step and record training error
         loss = self.Q.step(targets.to(torch.float64), outputs.to(torch.float64))  
