@@ -20,7 +20,7 @@ initial_epsilon = 1
 epsilon_decay = initial_epsilon / (n_episodes / 2)  
 final_epsilon = .00025
 
-replay_capacity = 10000
+replay_capacity = 1000000
 
 
 # initialize environment
@@ -62,4 +62,4 @@ training(env, agent, n_episodes=n_episodes, batch_size=batch_size, C=10000, verb
 #     screen_size=84, grayscale_obs=False, grayscale_newaxis=False
 # )   
 
-# evaluate(env, agent, n_games = 10)
+evaluate(env, agent, n_games = 10)

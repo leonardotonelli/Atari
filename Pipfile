@@ -12,6 +12,7 @@ torch = "*"
 gymnasium = "*"
 ale-py = "*"
 opencv-python = "*"
+keras-rl = "*"
 
 [dev-packages]
 
