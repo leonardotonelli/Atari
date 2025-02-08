@@ -17,6 +17,9 @@ class NeuralNetwork(nn.Module):
         self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
         self.out = nn.Linear(in_features=512, out_features=num_actions)
 
+        self.optimizer = torch.optim.RMSprop(self.parameters(), lr=0.001, alpha=0.99, eps=1e-08, weight_decay=0)
+        self.loss_fn = torch.nn.HuberLoss(reduction='mean', delta=1.0) # error/gradient clipping
+
     def forward(self, x):
         # print("Input shape:", x.shape)
         x = F.relu(self.conv1(x))
@@ -38,9 +41,7 @@ class NeuralNetwork(nn.Module):
         DQN object permorming a gradient step in the direction of the targets. 
         Inputs are two tensors defining targets and the outputs of the DQN.
         """
-        self.optimizer = torch.optim.RMSprop(self.parameters(), lr=0.001, alpha=0.99, eps=1e-08, weight_decay=0)
-        loss_fn = torch.nn.HuberLoss(reduction='mean', delta=1.0) # error/gradient clipping
-        loss = loss_fn(outputs, targets)
+        loss = self.loss_fn(outputs, targets)
 
         # Backpropagation
         self.optimizer.zero_grad()

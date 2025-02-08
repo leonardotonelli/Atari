@@ -28,6 +28,8 @@ class Agent:
         self.discount_factor = discount_factor
         self.memory_capacity = replay_capacity
         self.memory = []
+        self.reward_memory = 250
+        self.rewards = []
 
         self.epsilon = initial_epsilon
         self.epsilon_decay = epsilon_decay
@@ -54,6 +56,10 @@ class Agent:
         if len(self.memory) >= self.memory_capacity:
             self.memory.pop(0)
         self.memory.append((current_state, action, reward, next_state, terminated))
+
+        if len(self.rewards) >= self.reward_memory:
+            self.rewards.pop(0)
+        self.rewards.append(reward)
 
     def sample_memory(self, batch_size):
         """Return a random minibatch from the memory."""
