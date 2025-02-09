@@ -1,13 +1,9 @@
-import numpy as np
 import gymnasium as gym
 import ale_py
 from gymnasium.wrappers import AtariPreprocessing
-from tqdm import tqdm
 from agent import Agent
-from train import training, evaluate
+from train import training
 from model import NeuralNetwork
-import numpy as np
-from PIL import Image
 import torch
 
 gym.register_envs(ale_py)

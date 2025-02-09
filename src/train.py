@@ -2,9 +2,7 @@ from matplotlib import pyplot as plt
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
-import gymnasium as gym
 import time
-import os
 from PIL import Image
 import seaborn as sns
 

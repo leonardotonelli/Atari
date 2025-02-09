@@ -1,8 +1,6 @@
-import numpy as np
 import gymnasium as gym
 import ale_py
 from gymnasium.wrappers import AtariPreprocessing
-from tqdm import tqdm
 from agent import Agent
 from model import NeuralNetwork
 import torch

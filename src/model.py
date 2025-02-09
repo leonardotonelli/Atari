@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pandas as pd
-import numpy as np
 
 class NeuralNetwork(nn.Module):
     def __init__(self, num_actions):
