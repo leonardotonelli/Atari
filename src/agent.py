@@ -81,7 +81,6 @@ class Agent:
         actions = torch.tensor(np.array([sample[1] for sample in batch]), dtype=torch.int64)  
         
         rewards = torch.tensor(np.array([sample[2] for sample in batch]), dtype=torch.float32)
-        rewards = torch.clamp(rewards, -1.0, 1.0) # clio rewards between 1 and -1
         
         next_states = torch.tensor(np.array([sample[3] for sample in batch]), dtype=torch.float32)
         next_states = next_states.permute(0, 3, 1, 2)  # From [batch, height, width, channels] to [batch, channels, height, width]

@@ -6,8 +6,7 @@ from tqdm import tqdm
 from agent import Agent
 from model import NeuralNetwork
 import torch
-from training import evaluate
-
+from train import evaluate
 
 # hyperparameters
 game_index = "ALE/DemonAttack-v5"
@@ -37,7 +36,6 @@ agent = Agent(
 
 # Caricamento dei pesi del modello
 agent.Q.load_state_dict(torch.load("model/agent_Q.pth"))
-# agent.Q.eval()  # Imposta la rete in modalità di valutazione
 
 # Evaluation
 evaluate(env, agent, n_games=1)

@@ -5,10 +5,8 @@ import numpy as np
 import gymnasium as gym
 import time
 import os
-import heapq
 from PIL import Image
-import cv2
-import torch
+import seaborn as sns
 
 
 def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (False, 0)):
@@ -89,18 +87,34 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
             print(f"Episode just ended, total reward: {total_reward}, average q-value: {avg_q}")
             print("-"*10)
 
+    # Set Seaborn style for a professional look
+    sns.set_style("whitegrid")
+    sns.set_palette("Purples_r")
+
+    # Create a figure with subplots
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+
     # Plot the training progress
-    plt.plot(episode_rewards)
-    plt.xlabel("Episodes")
-    plt.ylabel("Total Reward")
-    plt.title("Training Progress")
-    plt.show()
-    
+    axes[0].plot(episode_rewards, color="#7B1FA2", linewidth=2)
+    axes[0].set_xlabel("Episodes", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[0].set_ylabel("Total Reward", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[0].set_title("Training Progress", fontsize=14, fontweight="bold", color="#6A1B9A")
+
     # Plot the Q-values
-    plt.plot(episode_Q_values)
-    plt.xlabel("Episodes")
-    plt.ylabel("Average Q-values")
-    plt.title("Q-values Progress")
+    axes[1].plot(episode_Q_values, color="#8E24AA", linewidth=2)
+    axes[1].set_xlabel("Episodes", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[1].set_ylabel("Average Q-values", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[1].set_title("Q-values Progress", fontsize=14, fontweight="bold", color="#6A1B9A")
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Save the figure
+    plot_path = "plots/training_progress.png"
+    plt.savefig(plot_path, dpi=300, bbox_inches="tight")
+    print(f"Plot saved to {plot_path}")
+
+    # Show the plot
     plt.show()
     
     
@@ -123,10 +137,10 @@ def evaluate(env, agent, n_games = 10):
         while not done:
             # store interesting frames
             action = agent.get_action(obs)
-            if agent.Q_values[action] > highest_value:
-                highest_frame, highest_value = obs, agent.Q_values[action]
-            if agent.Q_values[action] < lowest_value:
-                lowest_frame, lowest_value = obs, agent.Q_values[action]
+            if agent.Q_values[0][action] > highest_value:
+                highest_frame, highest_value = obs, agent.Q_values[0][action]
+            if agent.Q_values[0][action] < lowest_value:
+                lowest_frame, lowest_value = obs, agent.Q_values[0][action]
             
             # Take action in the environment
             next_obs, reward, terminated, truncated, info = env.step(action)
