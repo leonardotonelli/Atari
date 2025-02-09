@@ -21,6 +21,7 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     rep = 0 # counter to track the delayed update of Q
     episode_rewards = []  # To track rewards per episode
     episode_Q_values = [] # To track average Q-value per episode
+    training_error = []
 
     for episode in tqdm(range(n_episodes)):
         obs, info = env.reset()  # Reset the environment
@@ -69,13 +70,15 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
             done = terminated or truncated
             obs = next_obs
             
-
         # Decay exploration rate
         agent.decay_epsilon()
 
         # Log the episode's reward
         episode_rewards.append(total_reward)
         
+        # Log training error
+        training_error.append(np.array(agent.training_error).mean())
+
         # Log the episode's average Q-value
         avg_q = np.mean(stateavg_Q_values) if stateavg_Q_values else 0
         episode_Q_values.append(float(avg_q))
@@ -113,6 +116,24 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     print(f"Plot saved to {plot_path}")
 
     # Show the plot
+    plt.show()
+
+
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
+
+    # Plot training error
+    ax2.plot(training_error, color="#D81B60", linewidth=2)
+    ax2.set_xlabel("Episodes", fontsize=12, fontweight="bold", color="#880E4F")
+    ax2.set_ylabel("Training Error", fontsize=12, fontweight="bold", color="#880E4F")
+    ax2.set_title("Training Error Progress", fontsize=14, fontweight="bold", color="#AD1457")
+
+    # Adjust layout and save the figure
+    plt.tight_layout()
+    error_plot_path = "plots/training_error.png"
+    plt.savefig(error_plot_path, dpi=300, bbox_inches="tight")
+    print(f"Training error plot saved to {error_plot_path}")
+
+    # Show the training error plot
     plt.show()
     
     

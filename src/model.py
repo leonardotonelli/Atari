@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class NeuralNetwork(nn.Module):
-    def __init__(self, num_actions):
+    def __init__(self, num_actions, lr):
         super(NeuralNetwork, self).__init__()
 
         # Convolutional layers
@@ -15,7 +15,7 @@ class NeuralNetwork(nn.Module):
         self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
         self.out = nn.Linear(in_features=512, out_features=num_actions)
 
-        self.optimizer = torch.optim.RMSprop(self.parameters(), lr=0.001, alpha=0.99, eps=1e-08, weight_decay=0)
+        self.optimizer = torch.optim.RMSprop(self.parameters(), lr=lr, alpha=0.99, eps=1e-08, weight_decay=0)
         self.loss_fn = torch.nn.HuberLoss(reduction='mean', delta=1.0) # error/gradient clipping
 
     def forward(self, x):

@@ -12,19 +12,15 @@ class Agent:
         self,
         env: gym.Env,
         DQN: nn.Module,
-        learning_rate: float,
         initial_epsilon: float,
         epsilon_decay: float,
         final_epsilon: float,
-        discount_factor: float = 0.95,
+        discount_factor: float = 0.99,
         replay_capacity: int = 500000
     ):
         self.env = env
         self.Q = DQN  
         self.Q_at = copy.deepcopy(DQN)  
-
-        self.optimizer = optim.Adam(self.Q.parameters(), lr=learning_rate)
-        self.loss_fn = nn.MSELoss()
 
         self.discount_factor = discount_factor
         self.memory_capacity = replay_capacity

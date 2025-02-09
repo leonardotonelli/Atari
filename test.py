@@ -5,6 +5,7 @@ import gymnasium as gym
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import copy
 
 class Agent:
     def __init__(
@@ -16,11 +17,11 @@ class Agent:
         epsilon_decay: float,
         final_epsilon: float,
         discount_factor: float = 0.95,
-        replay_capacity: int = 1000
+        replay_capacity: int = 500000
     ):
         self.env = env
         self.Q = DQN  
-        self.Q_at = DQN  
+        self.Q_at = copy.deepcopy(DQN)  
 
         self.optimizer = optim.Adam(self.Q.parameters(), lr=learning_rate)
         self.loss_fn = nn.MSELoss()
@@ -80,19 +81,20 @@ class Agent:
         actions = torch.tensor(np.array([sample[1] for sample in batch]), dtype=torch.int64)  
         
         rewards = torch.tensor(np.array([sample[2] for sample in batch]), dtype=torch.float32)
-        rewards = torch.clamp(rewards, -1.0, 1.0) # clio rewards between 1 and -1
         
         next_states = torch.tensor(np.array([sample[3] for sample in batch]), dtype=torch.float32)
         next_states = next_states.permute(0, 3, 1, 2)  # From [batch, height, width, channels] to [batch, channels, height, width]
 
         terminated = torch.tensor(np.array([sample[4] for sample in batch]), dtype=torch.float32)
 
-        temp = torch.stack([
-            self.Q_at.forward(next_state).detach() for next_state in next_states
-        ]).max(dim=1).values
+        temp = self.Q_at(next_states).max(dim=1).values
 
-        targets = rewards + terminated * temp
-        outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
+        current_q_values = self.Q(current_states)  # Shape: [batch_size, num_actions]
+        actions = actions.unsqueeze(1)  # Shape: [batch_size, 1]
+        outputs = current_q_values.gather(1, actions).squeeze(1)  # Shape: [batch_size]
+
+        targets = rewards + self.discount_factor * terminated * temp
+        # outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
         
         # make the gradient step and record training error
         loss = self.Q.step(targets.to(torch.float64), outputs.to(torch.float64))  
@@ -113,8 +115,6 @@ class Agent:
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pandas as pd
-import numpy as np
 
 class NeuralNetwork(nn.Module):
     def __init__(self, num_actions):
@@ -140,7 +140,7 @@ class NeuralNetwork(nn.Module):
         # print("After conv2:", x.shape)
         x = F.relu(self.conv3(x))
         # print("After conv3:", x.shape)
-        x =  torch.flatten(x)  # Flatten
+        x = torch.flatten(x, start_dim=1)  # Flatten
         # print("After flatten:", x.shape)
         x = F.relu(self.fc1(x))
         # print("After fc1:", x.shape)
@@ -169,19 +169,13 @@ class NeuralNetwork(nn.Module):
         return float(value)
 
 
-
-
-
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 from PIL import Image
 import numpy as np
-import gymnasium as gym
 import time
-import os
-import heapq
 from PIL import Image
-import cv2
+import seaborn as sns
 
 
 def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (False, 0)):
@@ -210,7 +204,7 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
 
         while not done:
             rep += 1
-            if rep == C:
+            if rep % C == 0:
                 # Update the target Q-network
                 agent.update_Q_at()
 
@@ -238,14 +232,15 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
             if len(agent.rewards) > 400 and sum(agent.rewards) == 0:
                 terminated = True
 
-            # Update `done` and the current state
-            done = terminated or truncated
-            obs = next_obs
-            
             # Save average Q-value for the episode
             action_Q_value = agent.Q_values.detach().cpu().numpy()
             stateavg_Q_values.append(action_Q_value.mean()) # Log the episode's average Q-value
         
+            # Update `done` and the current state
+            done = terminated or truncated
+            obs = next_obs
+            
+
         # Decay exploration rate
         agent.decay_epsilon()
 
@@ -261,18 +256,34 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
             print(f"Episode just ended, total reward: {total_reward}, average q-value: {avg_q}")
             print("-"*10)
 
+    # Set Seaborn style for a professional look
+    sns.set_style("whitegrid")
+    sns.set_palette("Purples_r")
+
+    # Create a figure with subplots
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8))
+
     # Plot the training progress
-    plt.plot(episode_rewards)
-    plt.xlabel("Episodes")
-    plt.ylabel("Total Reward")
-    plt.title("Training Progress")
-    plt.show()
-    
+    axes[0].plot(episode_rewards, color="#7B1FA2", linewidth=2)
+    axes[0].set_xlabel("Episodes", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[0].set_ylabel("Total Reward", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[0].set_title("Training Progress", fontsize=14, fontweight="bold", color="#6A1B9A")
+
     # Plot the Q-values
-    plt.plot(episode_Q_values)
-    plt.xlabel("Episodes")
-    plt.ylabel("Average Q-values")
-    plt.title("Q-values Progress")
+    axes[1].plot(episode_Q_values, color="#8E24AA", linewidth=2)
+    axes[1].set_xlabel("Episodes", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[1].set_ylabel("Average Q-values", fontsize=12, fontweight="bold", color="#4A148C")
+    axes[1].set_title("Q-values Progress", fontsize=14, fontweight="bold", color="#6A1B9A")
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Save the figure
+    plot_path = "plots/training_progress.png"
+    plt.savefig(plot_path, dpi=300, bbox_inches="tight")
+    print(f"Plot saved to {plot_path}")
+
+    # Show the plot
     plt.show()
     
     
@@ -295,10 +306,10 @@ def evaluate(env, agent, n_games = 10):
         while not done:
             # store interesting frames
             action = agent.get_action(obs)
-            if agent.Q_values[action] > highest_value:
-                highest_frame, highest_value = obs, agent.Q_values[action]
-            if agent.Q_values[action] < lowest_value:
-                lowest_frame, lowest_value = obs, agent.Q_values[action]
+            if agent.Q_values[0][action] > highest_value:
+                highest_frame, highest_value = obs, agent.Q_values[0][action]
+            if agent.Q_values[0][action] < lowest_value:
+                lowest_frame, lowest_value = obs, agent.Q_values[0][action]
             
             # Take action in the environment
             next_obs, reward, terminated, truncated, info = env.step(action)
@@ -321,3 +332,57 @@ def evaluate(env, agent, n_games = 10):
     save_obs(lowest_frame, "frames/lowest.png")
 
 
+import gymnasium as gym
+import ale_py
+from gymnasium.wrappers import AtariPreprocessing
+from agent import Agent
+from train import training
+from model import NeuralNetwork
+import torch
+
+gym.register_envs(ale_py)
+
+# hyperparameters
+game_index = "ALE/DemonAttack-v5"
+
+n_episodes = 500
+batch_size = 32
+
+learning_rate = 0.01
+initial_epsilon = 1
+epsilon_decay = initial_epsilon / (n_episodes / 2)  
+final_epsilon = .00025
+
+replay_capacity = 1000000
+
+
+# initialize environment
+env = gym.make(game_index, frameskip=1)
+env = AtariPreprocessing(
+    env,
+    noop_max=10, frame_skip=4, terminal_on_life_loss=True,
+    screen_size=84, grayscale_obs=False, grayscale_newaxis=False
+)   
+
+num_actions = env.action_space.n
+state_shape = env.observation_space.shape
+
+# Initialize DQN model (agent)
+DQN = NeuralNetwork(num_actions)
+
+# Initialize PacmanAgent
+agent = Agent(
+    env=env,
+    DQN=DQN,
+    learning_rate=learning_rate,
+    initial_epsilon=initial_epsilon,
+    epsilon_decay=epsilon_decay,
+    final_epsilon=final_epsilon,
+    replay_capacity=replay_capacity,
+)
+
+# train the agent
+training(env, agent, n_episodes=n_episodes, batch_size=batch_size, C=10000, verbose=(False, 0))
+
+# Salvataggio dei pesi del modello
+torch.save(agent.Q.state_dict(), "model/agent_Q.pth")

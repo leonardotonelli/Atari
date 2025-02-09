@@ -5,19 +5,21 @@ from agent import Agent
 from train import training
 from model import NeuralNetwork
 import torch
+import numpy as np
 
 gym.register_envs(ale_py)
 
 # hyperparameters
 game_index = "ALE/DemonAttack-v5"
 
-n_episodes = 500
+n_episodes = 1000
 batch_size = 32
 
-learning_rate = 0.01
+learning_rate = 0.00025
 initial_epsilon = 1
-epsilon_decay = initial_epsilon / (n_episodes / 2)  
-final_epsilon = .00025
+final_epsilon = .1
+epsilon_decay = epsilon_decay = np.exp(np.log(final_epsilon / initial_epsilon) / n_episodes)
+discount_factor = 0.99
 
 replay_capacity = 1000000
 
@@ -26,7 +28,7 @@ replay_capacity = 1000000
 env = gym.make(game_index, frameskip=1)
 env = AtariPreprocessing(
     env,
-    noop_max=10, frame_skip=4, terminal_on_life_loss=True,
+    noop_max=30, frame_skip=4, terminal_on_life_loss=True,
     screen_size=84, grayscale_obs=False, grayscale_newaxis=False
 )   
 
@@ -34,17 +36,17 @@ num_actions = env.action_space.n
 state_shape = env.observation_space.shape
 
 # Initialize DQN model (agent)
-DQN = NeuralNetwork(num_actions)
+DQN = NeuralNetwork(num_actions, learning_rate)
 
 # Initialize PacmanAgent
 agent = Agent(
     env=env,
     DQN=DQN,
-    learning_rate=learning_rate,
     initial_epsilon=initial_epsilon,
     epsilon_decay=epsilon_decay,
     final_epsilon=final_epsilon,
-    replay_capacity=replay_capacity,
+    discount_factor = discount_factor,
+    replay_capacity=replay_capacity
 )
 
 # train the agent
