@@ -22,13 +22,37 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     episode_rewards = []  # To track rewards per episode
     episode_Q_values = [] # To track average Q-value per episode
     training_error = []
+    
+    print("Filling replay buffer...")
+    
+    # Initial filling of replay buffer
+    obs, _ = env.reset()
+    while len(agent.memory) < agent.min_replay_size:
+        action = env.action_space.sample()  # Random actions during filling
+        next_obs, reward, terminated, truncated, _ = env.step(action)
+        
+        # Store experience
+        agent.store_memory(obs, action, reward, next_obs, terminated)
+        
+        if terminated or truncated:
+            obs, _ = env.reset()
+        else:
+            obs = next_obs
+            
+        # Optional progress printing
+        if len(agent.memory) % 1000 == 0:
+            print(f"Replay buffer filling progress: {len(agent.memory)}/{agent.min_replay_size}")
+    
+    print("Replay buffer filled! Starting training...")
+
 
     for episode in tqdm(range(n_episodes)):
         obs, info = env.reset()  # Reset the environment
         done = False
         total_reward = 0  # Track total reward for the episode
         stateavg_Q_values = [] # Track state-averaged Q-values for the episode
-        
+        agent.training_error = []
+
         if verbose[0]:
             print("New Game has started!")
 
@@ -59,7 +83,7 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
             agent.update_Q(batch_size)
             
             # to avoid getting stuck in a 0 sequence loop
-            if len(agent.rewards) > 400 and sum(agent.rewards) == 0:
+            if len(agent.rewards) > 2000 and sum(agent.rewards) == 0:
                 terminated = True
 
             # Save average Q-value for the episode

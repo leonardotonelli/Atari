@@ -19,13 +19,12 @@ env = AtariPreprocessing(
 
 # Initialize DQN model (agent)
 num_actions = env.action_space.n
-DQN = NeuralNetwork(num_actions)
+DQN = NeuralNetwork(num_actions, lr=0.01)
 
 # Initialize PacmanAgent
 agent = Agent(
     env=env,
     DQN=DQN,
-    learning_rate=0.01,
     initial_epsilon=0.01,
     epsilon_decay=0.01,
     final_epsilon=0.01,
@@ -36,4 +35,4 @@ agent = Agent(
 agent.Q.load_state_dict(torch.load("model/agent_Q.pth"))
 
 # Evaluation
-evaluate(env, agent, n_games=1)
+evaluate(env, agent, n_games=10)

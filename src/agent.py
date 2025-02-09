@@ -16,7 +16,8 @@ class Agent:
         epsilon_decay: float,
         final_epsilon: float,
         discount_factor: float = 0.99,
-        replay_capacity: int = 500000
+        replay_capacity: int = 500000,
+        min_replay_size: int = 10000
     ):
         self.env = env
         self.Q = DQN  
@@ -24,8 +25,9 @@ class Agent:
 
         self.discount_factor = discount_factor
         self.memory_capacity = replay_capacity
+        self.min_replay_size = min_replay_size
         self.memory = []
-        self.reward_memory = 250
+        self.reward_memory = 5000
         self.rewards = []
 
         self.epsilon = initial_epsilon
@@ -66,9 +68,16 @@ class Agent:
         """
         Updates the parameters of the DQN using a random batch from memory.
         """
+        
+        # First check if we have enough samples
+        if len(self.memory) < self.min_replay_size:
+            return False
+        
         #sample minibatch from the memory
         if len(self.memory) < batch_size:
             return  # Not enough samples to update
+    
+
         batch = self.sample_memory(batch_size)
         # print(f"This is sample types: {type(batch[0][0])}")
         # create the batch dataset
@@ -89,11 +98,11 @@ class Agent:
         actions = actions.unsqueeze(1)  # Shape: [batch_size, 1]
         outputs = current_q_values.gather(1, actions).squeeze(1)  # Shape: [batch_size]
 
-        targets = rewards + self.discount_factor * terminated * temp
+        targets = rewards + self.discount_factor * (1 - terminated) * temp
         # outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
         
         # make the gradient step and record training error
-        loss = self.Q.step(targets.to(torch.float64), outputs.to(torch.float64))  
+        loss = self.Q.step(targets, outputs)  
 
         # store the loss in the class field
         self.training_error.append(loss)

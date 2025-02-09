@@ -12,19 +12,15 @@ class Agent:
         self,
         env: gym.Env,
         DQN: nn.Module,
-        learning_rate: float,
         initial_epsilon: float,
         epsilon_decay: float,
         final_epsilon: float,
-        discount_factor: float = 0.95,
+        discount_factor: float = 0.99,
         replay_capacity: int = 500000
     ):
         self.env = env
         self.Q = DQN  
         self.Q_at = copy.deepcopy(DQN)  
-
-        self.optimizer = optim.Adam(self.Q.parameters(), lr=learning_rate)
-        self.loss_fn = nn.MSELoss()
 
         self.discount_factor = discount_factor
         self.memory_capacity = replay_capacity
@@ -93,7 +89,7 @@ class Agent:
         actions = actions.unsqueeze(1)  # Shape: [batch_size, 1]
         outputs = current_q_values.gather(1, actions).squeeze(1)  # Shape: [batch_size]
 
-        targets = rewards + self.discount_factor * terminated * temp
+        targets = rewards + self.discount_factor * (1 - terminated) * temp
         # outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
         
         # make the gradient step and record training error
@@ -117,7 +113,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class NeuralNetwork(nn.Module):
-    def __init__(self, num_actions):
+    def __init__(self, num_actions, lr):
         super(NeuralNetwork, self).__init__()
 
         # Convolutional layers
@@ -129,7 +125,7 @@ class NeuralNetwork(nn.Module):
         self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
         self.out = nn.Linear(in_features=512, out_features=num_actions)
 
-        self.optimizer = torch.optim.RMSprop(self.parameters(), lr=0.001, alpha=0.99, eps=1e-08, weight_decay=0)
+        self.optimizer = torch.optim.RMSprop(self.parameters(), lr=lr, alpha=0.99, eps=1e-08, weight_decay=0)
         self.loss_fn = torch.nn.HuberLoss(reduction='mean', delta=1.0) # error/gradient clipping
 
     def forward(self, x):
@@ -169,6 +165,7 @@ class NeuralNetwork(nn.Module):
         return float(value)
 
 
+
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 from PIL import Image
@@ -192,6 +189,7 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     rep = 0 # counter to track the delayed update of Q
     episode_rewards = []  # To track rewards per episode
     episode_Q_values = [] # To track average Q-value per episode
+    training_error = []
 
     for episode in tqdm(range(n_episodes)):
         obs, info = env.reset()  # Reset the environment
@@ -240,13 +238,15 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
             done = terminated or truncated
             obs = next_obs
             
-
         # Decay exploration rate
         agent.decay_epsilon()
 
         # Log the episode's reward
         episode_rewards.append(total_reward)
         
+        # Log training error
+        training_error.append(np.array(agent.training_error).mean())
+
         # Log the episode's average Q-value
         avg_q = np.mean(stateavg_Q_values) if stateavg_Q_values else 0
         episode_Q_values.append(float(avg_q))
@@ -284,6 +284,24 @@ def training(env, agent, n_episodes: int, batch_size: int, C: int, verbose = (Fa
     print(f"Plot saved to {plot_path}")
 
     # Show the plot
+    plt.show()
+
+
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
+
+    # Plot training error
+    ax2.plot(training_error, color="#D81B60", linewidth=2)
+    ax2.set_xlabel("Episodes", fontsize=12, fontweight="bold", color="#880E4F")
+    ax2.set_ylabel("Training Error", fontsize=12, fontweight="bold", color="#880E4F")
+    ax2.set_title("Training Error Progress", fontsize=14, fontweight="bold", color="#AD1457")
+
+    # Adjust layout and save the figure
+    plt.tight_layout()
+    error_plot_path = "plots/training_error.png"
+    plt.savefig(error_plot_path, dpi=300, bbox_inches="tight")
+    print(f"Training error plot saved to {error_plot_path}")
+
+    # Show the training error plot
     plt.show()
     
     
@@ -332,6 +350,7 @@ def evaluate(env, agent, n_games = 10):
     save_obs(lowest_frame, "frames/lowest.png")
 
 
+
 import gymnasium as gym
 import ale_py
 from gymnasium.wrappers import AtariPreprocessing
@@ -339,19 +358,21 @@ from agent import Agent
 from train import training
 from model import NeuralNetwork
 import torch
+import numpy as np
 
 gym.register_envs(ale_py)
 
 # hyperparameters
 game_index = "ALE/DemonAttack-v5"
 
-n_episodes = 500
+n_episodes = 1000
 batch_size = 32
 
-learning_rate = 0.01
+learning_rate = 0.00025
 initial_epsilon = 1
-epsilon_decay = initial_epsilon / (n_episodes / 2)  
-final_epsilon = .00025
+final_epsilon = .1
+epsilon_decay = epsilon_decay = np.exp(np.log(final_epsilon / initial_epsilon) / n_episodes)
+discount_factor = 0.99
 
 replay_capacity = 1000000
 
@@ -360,7 +381,7 @@ replay_capacity = 1000000
 env = gym.make(game_index, frameskip=1)
 env = AtariPreprocessing(
     env,
-    noop_max=10, frame_skip=4, terminal_on_life_loss=True,
+    noop_max=30, frame_skip=4, terminal_on_life_loss=True,
     screen_size=84, grayscale_obs=False, grayscale_newaxis=False
 )   
 
@@ -368,17 +389,17 @@ num_actions = env.action_space.n
 state_shape = env.observation_space.shape
 
 # Initialize DQN model (agent)
-DQN = NeuralNetwork(num_actions)
+DQN = NeuralNetwork(num_actions, learning_rate)
 
 # Initialize PacmanAgent
 agent = Agent(
     env=env,
     DQN=DQN,
-    learning_rate=learning_rate,
     initial_epsilon=initial_epsilon,
     epsilon_decay=epsilon_decay,
     final_epsilon=final_epsilon,
-    replay_capacity=replay_capacity,
+    discount_factor = discount_factor,
+    replay_capacity=replay_capacity
 )
 
 # train the agent
@@ -386,3 +407,4 @@ training(env, agent, n_episodes=n_episodes, batch_size=batch_size, C=10000, verb
 
 # Salvataggio dei pesi del modello
 torch.save(agent.Q.state_dict(), "model/agent_Q.pth")
+
