@@ -52,6 +52,10 @@ class Agent:
 
     def store_memory(self, current_state, action, reward, next_state, terminated):
         """Store experiences in replay memory."""
+
+        # reward clipping
+        reward = np.clip(reward, -1.0, 1.0) 
+
         if len(self.memory) >= self.memory_capacity:
             self.memory.pop(0)
         self.memory.append((current_state, action, reward, next_state, terminated))
@@ -79,12 +83,11 @@ class Agent:
     
 
         batch = self.sample_memory(batch_size)
-        # print(f"This is sample types: {type(batch[0][0])}")
+        
         # create the batch dataset
         current_states = torch.tensor(np.array([sample[0] for sample in batch]), dtype=torch.float32)
         current_states = current_states.permute(0, 3, 1, 2)  # Reorder dimensions
         actions = torch.tensor(np.array([sample[1] for sample in batch]), dtype=torch.int64)  
-        
         rewards = torch.tensor(np.array([sample[2] for sample in batch]), dtype=torch.float32)
         
         next_states = torch.tensor(np.array([sample[3] for sample in batch]), dtype=torch.float32)
@@ -99,12 +102,9 @@ class Agent:
         outputs = current_q_values.gather(1, actions).squeeze(1)  # Shape: [batch_size]
 
         targets = rewards + self.discount_factor * (1 - terminated) * temp
-        # outputs = torch.tensor(np.array([self.Q.get_value(current_state, current_action) for current_state, current_action in zip(current_states, actions)]), requires_grad=True)
-        
+
         # make the gradient step and record training error
         loss = self.Q.step(targets, outputs)  
-
-        # store the loss in the class field
         self.training_error.append(loss)
 
     def update_Q_at(self):

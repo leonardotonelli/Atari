@@ -12,9 +12,8 @@ gym.register_envs(ale_py)
 # hyperparameters
 game_index = "ALE/DemonAttack-v5"
 
-n_episodes = 3000
-batch_size = 32
-
+n_episodes = 1000
+batch_size = 64
 learning_rate = 0.00025
 initial_epsilon = 1
 final_epsilon = .1
@@ -51,7 +50,7 @@ agent = Agent(
 )
 
 # train the agent
-training(env, agent, n_episodes=n_episodes, batch_size=batch_size, C=50000, verbose=(False, 0))
+training(env, agent, n_episodes=n_episodes, batch_size=batch_size, C=10000, verbose=(False, 0))
 
 # Salvataggio dei pesi del modello
 torch.save(agent.Q.state_dict(), "model/agent_Q.pth")
