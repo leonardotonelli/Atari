@@ -14,8 +14,10 @@ ale-py = "*"
 opencv-python = "*"
 keras-rl = "*"
 seaborn = "*"
+jinja2 = "*"
 
 [dev-packages]
+ipykernel = "*"
 
 [requires]
 python_version = "3.12"

@@ -1,9 +1,9 @@
 import gymnasium as gym
 import ale_py
 from gymnasium.wrappers import AtariPreprocessing
-from agent import Agent
-from train import training
-from model import NeuralNetwork
+from src.agent import Agent
+from src.train import training
+from src.model import NeuralNetwork
 import torch
 import numpy as np
 
