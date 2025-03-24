@@ -2,9 +2,9 @@ import gymnasium as gym
 import ale_py
 from gymnasium.wrappers import AtariPreprocessing, RecordVideo
 from src.agent import Agent
-from model import NeuralNetwork
-import torch
+from src.model import NeuralNetwork
 from src.train import evaluate
+import torch
 import os
 
 # hyperparameters
