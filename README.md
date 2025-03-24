@@ -15,13 +15,14 @@ This project implements the Deep Q-Learning algorithm to play Atari games throug
 ```
 dqn-atari/
 ├── src/                 # Package containing all relevant classes and functions
-├── training.py          # Script for training the model
-├── eval.py              # Script for evaluating the trained model
+│   ├── agent.py         # Agent class
+│   ├── model.py         # Model architecture as class
+│   └── train.py         # Training algorithm
 ├── model/               # Saved model weights
 ├── plots/               # Training and evaluation plots
 ├── vid/                 # Recorded gameplay videos
-│   ├── gameplay.gif     # Animated GIF of gameplay
-│   └── rl-video-episode-0.mp4  # Demo video of the trained agent
+├── training.py          # Script for training the model
+├── eval.py              # Script for evaluating the trained model
 ├── Pipfile              # Pipenv dependencies file
 ├── Pipfile.lock         # Pipenv lock file
 ├── report.pdf           # Detailed project report
