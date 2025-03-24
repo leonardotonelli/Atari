@@ -6,7 +6,9 @@ This repository contains an implementation of the Deep Q-Network (DQN) architect
 
 This project implements the Deep Q-Learning algorithm to play Atari games through reinforcement learning. The implementation follows the architecture described in the original DeepMind paper, but achieves significant results with approximately 1/150th of the original training time.
 
-![DQN Agent Gameplay](vid/gameplay.gif)
+<p align="center">
+  <img src="vid/gameplay.gif" alt="DQN Agent Gameplay">
+</p>
 
 ## Project Structure
 
